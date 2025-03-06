@@ -1,0 +1,31 @@
+volumes:
+  postgres_data:
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/mydb?sslmode=disable
+    healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+          interval: 30s
+          timeout: 10s
+          retries: 3
+          start_period: 10s
+  
